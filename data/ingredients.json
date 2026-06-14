@@ -1,0 +1,232 @@
+[
+  {
+    "id": "1",
+    "name": "牛肉",
+    "unit": "kg",
+    "current_price": 60.0,
+    "calorie_per_unit": 2500,
+    "price_history": [
+      {
+        "price": 52.0,
+        "timestamp": "2026-05-25T07:55:30.872883"
+      },
+      {
+        "price": 55.0,
+        "timestamp": "2026-06-01T07:55:30.872883"
+      },
+      {
+        "price": 58.0,
+        "timestamp": "2026-06-08T07:55:30.872883"
+      },
+      {
+        "price": 60.0,
+        "timestamp": "2026-06-15T07:55:30.872883"
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "name": "鸡肉",
+    "unit": "kg",
+    "current_price": 25.0,
+    "calorie_per_unit": 1650,
+    "price_history": [
+      {
+        "price": 22.0,
+        "timestamp": "2026-05-25T07:55:30.872883"
+      },
+      {
+        "price": 23.5,
+        "timestamp": "2026-06-01T07:55:30.872883"
+      },
+      {
+        "price": 24.0,
+        "timestamp": "2026-06-08T07:55:30.872883"
+      },
+      {
+        "price": 25.0,
+        "timestamp": "2026-06-15T07:55:30.872883"
+      }
+    ]
+  },
+  {
+    "id": "3",
+    "name": "猪肉",
+    "unit": "kg",
+    "current_price": 35.0,
+    "calorie_per_unit": 2420,
+    "price_history": [
+      {
+        "price": 30.0,
+        "timestamp": "2026-05-25T07:55:30.872883"
+      },
+      {
+        "price": 32.0,
+        "timestamp": "2026-06-01T07:55:30.872883"
+      },
+      {
+        "price": 34.0,
+        "timestamp": "2026-06-08T07:55:30.872883"
+      },
+      {
+        "price": 35.0,
+        "timestamp": "2026-06-15T07:55:30.872883"
+      }
+    ]
+  },
+  {
+    "id": "4",
+    "name": "洋葱",
+    "unit": "kg",
+    "current_price": 5.0,
+    "calorie_per_unit": 400,
+    "price_history": [
+      {
+        "price": 5.0,
+        "timestamp": "2026-06-15T07:55:30.872873"
+      }
+    ]
+  },
+  {
+    "id": "5",
+    "name": "青椒",
+    "unit": "kg",
+    "current_price": 8.0,
+    "calorie_per_unit": 270,
+    "price_history": [
+      {
+        "price": 8.0,
+        "timestamp": "2026-06-15T07:55:30.872874"
+      }
+    ]
+  },
+  {
+    "id": "6",
+    "name": "土豆",
+    "unit": "kg",
+    "current_price": 4.0,
+    "calorie_per_unit": 770,
+    "price_history": [
+      {
+        "price": 4.0,
+        "timestamp": "2026-06-15T07:55:30.872875"
+      }
+    ]
+  },
+  {
+    "id": "7",
+    "name": "米饭",
+    "unit": "kg",
+    "current_price": 3.0,
+    "calorie_per_unit": 1100,
+    "price_history": [
+      {
+        "price": 3.0,
+        "timestamp": "2026-06-15T07:55:30.872876"
+      }
+    ]
+  },
+  {
+    "id": "8",
+    "name": "面条",
+    "unit": "kg",
+    "current_price": 6.0,
+    "calorie_per_unit": 2800,
+    "price_history": [
+      {
+        "price": 6.0,
+        "timestamp": "2026-06-15T07:55:30.872876"
+      }
+    ]
+  },
+  {
+    "id": "9",
+    "name": "酱油",
+    "unit": "L",
+    "current_price": 12.0,
+    "calorie_per_unit": 200,
+    "price_history": [
+      {
+        "price": 12.0,
+        "timestamp": "2026-06-15T07:55:30.872877"
+      }
+    ]
+  },
+  {
+    "id": "10",
+    "name": "食用油",
+    "unit": "L",
+    "current_price": 20.0,
+    "calorie_per_unit": 9000,
+    "price_history": [
+      {
+        "price": 18.0,
+        "timestamp": "2026-05-25T07:55:30.872883"
+      },
+      {
+        "price": 19.0,
+        "timestamp": "2026-06-01T07:55:30.872883"
+      },
+      {
+        "price": 19.5,
+        "timestamp": "2026-06-08T07:55:30.872883"
+      },
+      {
+        "price": 20.0,
+        "timestamp": "2026-06-15T07:55:30.872883"
+      }
+    ]
+  },
+  {
+    "id": "11",
+    "name": "盐",
+    "unit": "kg",
+    "current_price": 5.0,
+    "calorie_per_unit": 0,
+    "price_history": [
+      {
+        "price": 5.0,
+        "timestamp": "2026-06-15T07:55:30.872879"
+      }
+    ]
+  },
+  {
+    "id": "12",
+    "name": "可乐",
+    "unit": "L",
+    "current_price": 4.0,
+    "calorie_per_unit": 420,
+    "price_history": [
+      {
+        "price": 4.0,
+        "timestamp": "2026-06-15T07:55:30.872880"
+      }
+    ]
+  },
+  {
+    "id": "13",
+    "name": "黄瓜",
+    "unit": "kg",
+    "current_price": 6.0,
+    "calorie_per_unit": 160,
+    "price_history": [
+      {
+        "price": 6.0,
+        "timestamp": "2026-06-15T07:55:30.872881"
+      }
+    ]
+  },
+  {
+    "id": "14",
+    "name": "花生米",
+    "unit": "kg",
+    "current_price": 15.0,
+    "calorie_per_unit": 5670,
+    "price_history": [
+      {
+        "price": 15.0,
+        "timestamp": "2026-06-15T07:55:30.872882"
+      }
+    ]
+  }
+]

@@ -1,0 +1,222 @@
+[
+  {
+    "id": "ee112ab5",
+    "name": "洋葱炒牛肉",
+    "category": "热菜",
+    "target_margin": 0.6,
+    "recipe": [
+      {
+        "ingredient_id": "1",
+        "ingredient_name": "牛肉",
+        "amount": 200,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": "4",
+        "ingredient_name": "洋葱",
+        "amount": 100,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": "9",
+        "ingredient_name": "酱油",
+        "amount": 15,
+        "unit": "ml"
+      },
+      {
+        "ingredient_id": "10",
+        "ingredient_name": "食用油",
+        "amount": 20,
+        "unit": "ml"
+      },
+      {
+        "ingredient_id": "11",
+        "ingredient_name": "盐",
+        "amount": 2,
+        "unit": "g"
+      }
+    ]
+  },
+  {
+    "id": "68d959a0",
+    "name": "青椒炒肉丝",
+    "category": "热菜",
+    "target_margin": 0.6,
+    "recipe": [
+      {
+        "ingredient_id": "2",
+        "ingredient_name": "鸡肉",
+        "amount": 150,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": "5",
+        "ingredient_name": "青椒",
+        "amount": 100,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": "9",
+        "ingredient_name": "酱油",
+        "amount": 10,
+        "unit": "ml"
+      },
+      {
+        "ingredient_id": "10",
+        "ingredient_name": "食用油",
+        "amount": 15,
+        "unit": "ml"
+      }
+    ]
+  },
+  {
+    "id": "6a6fbd96",
+    "name": "土豆烧肉",
+    "category": "热菜",
+    "target_margin": 0.55,
+    "recipe": [
+      {
+        "ingredient_id": "3",
+        "ingredient_name": "猪肉",
+        "amount": 180,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": "6",
+        "ingredient_name": "土豆",
+        "amount": 150,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": "9",
+        "ingredient_name": "酱油",
+        "amount": 20,
+        "unit": "ml"
+      },
+      {
+        "ingredient_id": "10",
+        "ingredient_name": "食用油",
+        "amount": 15,
+        "unit": "ml"
+      },
+      {
+        "ingredient_id": "11",
+        "ingredient_name": "盐",
+        "amount": 3,
+        "unit": "g"
+      }
+    ]
+  },
+  {
+    "id": "4df616d9",
+    "name": "凉拌黄瓜",
+    "category": "凉菜",
+    "target_margin": 0.7,
+    "recipe": [
+      {
+        "ingredient_id": "13",
+        "ingredient_name": "黄瓜",
+        "amount": 200,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": "9",
+        "ingredient_name": "酱油",
+        "amount": 10,
+        "unit": "ml"
+      },
+      {
+        "ingredient_id": "11",
+        "ingredient_name": "盐",
+        "amount": 2,
+        "unit": "g"
+      }
+    ]
+  },
+  {
+    "id": "6f2e5f0e",
+    "name": "油炸花生米",
+    "category": "凉菜",
+    "target_margin": 0.65,
+    "recipe": [
+      {
+        "ingredient_id": "14",
+        "ingredient_name": "花生米",
+        "amount": 100,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": "10",
+        "ingredient_name": "食用油",
+        "amount": 30,
+        "unit": "ml"
+      },
+      {
+        "ingredient_id": "11",
+        "ingredient_name": "盐",
+        "amount": 1,
+        "unit": "g"
+      }
+    ]
+  },
+  {
+    "id": "662bfc97",
+    "name": "白米饭",
+    "category": "主食",
+    "target_margin": 0.3,
+    "recipe": [
+      {
+        "ingredient_id": "7",
+        "ingredient_name": "米饭",
+        "amount": 200,
+        "unit": "g"
+      }
+    ]
+  },
+  {
+    "id": "0eadc8d3",
+    "name": "牛肉面",
+    "category": "主食",
+    "target_margin": 0.5,
+    "recipe": [
+      {
+        "ingredient_id": "8",
+        "ingredient_name": "面条",
+        "amount": 150,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": "1",
+        "ingredient_name": "牛肉",
+        "amount": 50,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": "9",
+        "ingredient_name": "酱油",
+        "amount": 10,
+        "unit": "ml"
+      },
+      {
+        "ingredient_id": "11",
+        "ingredient_name": "盐",
+        "amount": 2,
+        "unit": "g"
+      }
+    ]
+  },
+  {
+    "id": "fd539e2a",
+    "name": "可乐",
+    "category": "饮品",
+    "target_margin": 0.7,
+    "recipe": [
+      {
+        "ingredient_id": "12",
+        "ingredient_name": "可乐",
+        "amount": 330,
+        "unit": "ml"
+      }
+    ]
+  }
+]
