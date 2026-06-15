@@ -132,7 +132,9 @@ class CSVImporter:
 
     @staticmethod
     def generate_ingredient_template(output_path: str) -> None:
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        dir_part = os.path.dirname(output_path)
+        if dir_part:
+            os.makedirs(dir_part, exist_ok=True)
         with open(output_path, 'w', encoding='utf-8-sig', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(['name', 'unit', 'current_price', 'calorie_per_unit'])
@@ -143,7 +145,9 @@ class CSVImporter:
 
     @staticmethod
     def generate_dish_template(output_path: str) -> None:
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        dir_part = os.path.dirname(output_path)
+        if dir_part:
+            os.makedirs(dir_part, exist_ok=True)
         with open(output_path, 'w', encoding='utf-8-sig', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(['name', 'category', 'target_margin', 'ingredients', 'amount', 'unit'])

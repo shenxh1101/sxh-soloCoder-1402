@@ -1,6 +1,6 @@
 import sys
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 
 from models import Ingredient, Dish, RecipeItem, DishCostAnalysis
@@ -9,6 +9,48 @@ from cost_calculator import CostCalculator, MarginAnalyzer
 from csv_importer import CSVImporter
 from ascii_chart import AsciiChart
 from pdf_exporter import PDFExporter
+
+
+def resolve_path(user_input: str, default_filename: str = "") -> str:
+    if not user_input:
+        user_input = default_filename
+    if not os.path.isabs(user_input):
+        user_input = os.path.join(os.getcwd(), user_input)
+    dir_path = os.path.dirname(user_input)
+    if dir_path and not os.path.exists(dir_path):
+        os.makedirs(dir_path, exist_ok=True)
+    return user_input
+
+
+def _display_dish_analysis_detail(analysis: DishCostAnalysis) -> None:
+    dish = analysis.dish
+    print()
+    print(f"菜品名称: {dish.name}")
+    print(f"菜品类别: {dish.category}")
+    print(f"目标毛利率: {dish.target_margin * 100:.1f}%")
+    print()
+    print("-" * 70)
+    print()
+    print("配方明细:")
+    print(f"{'原材料':<15} {'用量':<10} {'成本(元)':<12} {'占比':<10}")
+    print("-" * 50)
+
+    for name, cost in analysis.ingredient_costs:
+        item = next((i for i in dish.recipe if i.ingredient_name == name), None)
+        amount = item.amount if item else 0
+        unit = item.unit if item else ''
+        percentage = (cost / analysis.material_cost * 100) if analysis.material_cost > 0 else 0
+        print(f"{name:<15} {amount:.0f}{unit:<7} {cost:<12.2f} {percentage:<10.1f}%")
+
+    print("-" * 50)
+    print()
+    print(f"物料成本: ¥{analysis.material_cost:.2f}")
+    print(f"建议售价: ¥{analysis.suggested_price:.2f}")
+    print(f"毛利额:   ¥{analysis.gross_profit:.2f}")
+    print(f"毛利率:   {analysis.gross_margin * 100:.1f}%")
+    if analysis.total_calorie:
+        print(f"总热量:   {analysis.total_calorie:.0f} kcal")
+    print()
 
 
 class RestaurantCostAnalyzer:
@@ -239,22 +281,49 @@ class RestaurantCostAnalyzer:
             input("按回车继续...")
             return
 
-        used_in_dishes = []
+        affected_dishes = []
+        affected_dishes_detail = []
         for dish in self.dishes:
             for item in dish.recipe:
                 if item.ingredient_id == ing_id:
-                    used_in_dishes.append(dish.name)
+                    affected_dishes.append(dish.name)
+                    affected_dishes_detail.append((dish, item))
                     break
 
-        if used_in_dishes:
-            print(f"警告: 该原材料正在被以下菜品使用: {', '.join(used_in_dishes)}")
-            confirm = input("确认删除? (y/N): ").strip().lower()
+        dishes_to_delete = []
+        dishes_to_modify = []
+
+        if affected_dishes:
+            print()
+            print(f"⚠️  该原材料正在被 {len(affected_dishes)} 道菜品使用:")
+            for dish, item in affected_dishes_detail:
+                remaining_count = len(dish.recipe) - 1
+                if remaining_count <= 0:
+                    dishes_to_delete.append(dish)
+                    print(f"  - {dish.name} ({dish.category}): 使用 {item.amount}{item.unit} → 删除后将无配方，【整道菜会被删除】")
+                else:
+                    dishes_to_modify.append(dish)
+                    print(f"  - {dish.name} ({dish.category}): 使用 {item.amount}{item.unit} → 将从配方中移除该原料")
+
+            print()
+            confirm = input("确认删除原材料并自动处理关联菜品? (y/N): ").strip().lower()
+            if confirm != 'y':
+                print("已取消删除。")
+                input("按回车继续...")
+                return
+        else:
+            confirm = input(f"确认删除原材料 '{search_name}'? (y/N): ").strip().lower()
             if confirm != 'y':
                 return
 
-        confirm = input(f"确认删除原材料 '{search_name}'? (y/N): ").strip().lower()
-        if confirm != 'y':
-            return
+        if dishes_to_delete:
+            for d in dishes_to_delete:
+                if d in self.dishes:
+                    self.dishes.remove(d)
+
+        if dishes_to_modify:
+            for dish in dishes_to_modify:
+                dish.recipe = [item for item in dish.recipe if item.ingredient_id != ing_id]
 
         del self.ingredients[ing_id]
         self._save_data()
@@ -263,7 +332,16 @@ class RestaurantCostAnalyzer:
             self._recalculate_all()
             self._save_data()
 
-        print(f"✓ 已删除原材料: {search_name}")
+        print()
+        print(f"✅ 已删除原材料: {search_name}")
+        if dishes_to_delete:
+            print(f"  - 已删除 {len(dishes_to_delete)} 道无剩余配方的菜品: {', '.join(d.name for d in dishes_to_delete)}")
+        if dishes_to_modify:
+            print(f"  - 已更新 {len(dishes_to_modify)} 道菜的配方: {', '.join(d.name for d in dishes_to_modify)}")
+        if self.analyses:
+            low_margin = MarginAnalyzer.get_low_margin_dishes(self.analyses, 0.4)
+            print(f"  - 当前共 {len(self.analyses)} 道菜，低毛利菜品 {len(low_margin)} 道")
+        print()
         input("按回车继续...")
 
     def dish_menu(self):
@@ -467,35 +545,7 @@ class RestaurantCostAnalyzer:
             input("按回车继续...")
             return
 
-        dish = analysis.dish
-        print()
-        print(f"菜品名称: {dish.name}")
-        print(f"菜品类别: {dish.category}")
-        print(f"目标毛利率: {dish.target_margin * 100:.1f}%")
-        print()
-        print("-" * 70)
-        print()
-        print("配方明细:")
-        print(f"{'原材料':<15} {'用量':<10} {'成本(元)':<12} {'占比':<10}")
-        print("-" * 50)
-
-        for name, cost in analysis.ingredient_costs:
-            item = next((i for i in dish.recipe if i.ingredient_name == name), None)
-            amount = item.amount if item else 0
-            unit = item.unit if item else ''
-            percentage = (cost / analysis.material_cost * 100) if analysis.material_cost > 0 else 0
-            print(f"{name:<15} {amount:.0f}{unit:<7} {cost:<12.2f} {percentage:<10.1f}%")
-
-        print("-" * 50)
-        print()
-        print(f"物料成本: ¥{analysis.material_cost:.2f}")
-        print(f"建议售价: ¥{analysis.suggested_price:.2f}")
-        print(f"毛利额:   ¥{analysis.gross_profit:.2f}")
-        print(f"毛利率:   {analysis.gross_margin * 100:.1f}%")
-        if analysis.total_calorie:
-            print(f"总热量:   {analysis.total_calorie:.0f} kcal")
-
-        print()
+        _display_dish_analysis_detail(analysis)
         input("按回车继续...")
 
     def delete_dish(self):
@@ -549,18 +599,16 @@ class RestaurantCostAnalyzer:
             elif choice == '2':
                 self.import_dishes_csv()
             elif choice == '3':
-                path = input("请输入模板保存路径 (默认: templates/ingredients_template.csv): ").strip()
-                if not path:
-                    path = "templates/ingredients_template.csv"
-                CSVImporter.generate_ingredient_template(path)
-                print(f"✓ 模板已生成: {path}")
+                path = input("请输入模板保存路径 (默认: ingredients_template.csv): ").strip()
+                resolved = resolve_path(path, "ingredients_template.csv")
+                CSVImporter.generate_ingredient_template(resolved)
+                print(f"✅ 模板已生成: {resolved}")
                 input("按回车继续...")
             elif choice == '4':
-                path = input("请输入模板保存路径 (默认: templates/dishes_template.csv): ").strip()
-                if not path:
-                    path = "templates/dishes_template.csv"
-                CSVImporter.generate_dish_template(path)
-                print(f"✓ 模板已生成: {path}")
+                path = input("请输入模板保存路径 (默认: dishes_template.csv): ").strip()
+                resolved = resolve_path(path, "dishes_template.csv")
+                CSVImporter.generate_dish_template(resolved)
+                print(f"✅ 模板已生成: {resolved}")
                 input("按回车继续...")
             elif choice == '0':
                 break
@@ -764,9 +812,11 @@ class RestaurantCostAnalyzer:
             return
 
         dish = None
-        for d in self.dishes:
+        original_analysis = None
+        for idx, d in enumerate(self.dishes):
             if d.name == dish_name:
                 dish = d
+                original_analysis = self.analyses[idx]
                 break
 
         if not dish:
@@ -776,71 +826,78 @@ class RestaurantCostAnalyzer:
 
         print()
         print("菜品配方:")
-        for i, item in enumerate(dish.recipe, 1):
+        recipe_items = list(dish.recipe)
+        for i, item in enumerate(recipe_items, 1):
             ingredient = self.ingredients.get(item.ingredient_id)
             price = ingredient.current_price if ingredient else 0
             unit = ingredient.unit if ingredient else ''
-            print(f"  {i}. {item.ingredient_name}: {item.amount}{item.unit} (单价: {price}元/{unit})")
+            print(f"  [{i}] {item.ingredient_name}: {item.amount}{item.unit} (单价: {price}元/{unit})")
 
         print()
         try:
-            choice_str = input("请选择要替换的原材料序号 (留空返回): ").strip()
+            choice_str = input("请选择要替换的原材料序号 (如1, 留空返回): ").strip()
             if not choice_str:
                 return
-            choice = int(choice_str) - 1
-            if choice < 0 or choice >= len(dish.recipe):
-                raise ValueError
-        except ValueError:
-            print("无效的选择")
+            choice_idx = int(choice_str)
+            if choice_idx < 1 or choice_idx > len(recipe_items):
+                raise ValueError(f"序号需在 1~{len(recipe_items)} 之间")
+            recipe_pos = choice_idx - 1
+        except ValueError as e:
+            print(f"无效的选择: {e}")
             input("按回车继续...")
             return
 
-        original_item = dish.recipe[choice]
+        original_item = recipe_items[recipe_pos]
         original_ingredient = self.ingredients.get(original_item.ingredient_id)
 
         print()
-        print(f"要替换的原材料: {original_item.ingredient_name} {original_item.amount}{original_item.unit}")
+        print(f"▶ 已选择 #{choice_idx}: {original_item.ingredient_name} {original_item.amount}{original_item.unit}")
+        if original_ingredient and original_ingredient.calorie_per_unit:
+            print(f"  每{original_ingredient.unit}热量: {original_ingredient.calorie_per_unit:.0f} kcal")
+
         print()
+        all_ings = sorted(self.ingredients.values(), key=lambda x: x.name)
+        available_list = [ing for ing in all_ings if ing.id != original_item.ingredient_id]
 
         print("可用替换原材料:")
-        available = []
-        for i, ing in enumerate(sorted(self.ingredients.values(), key=lambda x: x.name), 1):
-            if ing.id != original_item.ingredient_id:
-                available.append(ing)
-                calorie = f" ({ing.calorie_per_unit:.0f}kcal/{ing.unit})" if ing.calorie_per_unit else ""
-                print(f"  {i}. {ing.name} - {ing.current_price:.2f}元/{ing.unit}{calorie}")
+        for i, ing in enumerate(available_list, 1):
+            calorie = f" ({ing.calorie_per_unit:.0f}kcal/{ing.unit})" if ing.calorie_per_unit else ""
+            print(f"  [{i}] {ing.name} - {ing.current_price:.2f}元/{ing.unit}{calorie}")
 
         print()
         try:
             replace_choice_str = input("请选择替换的原材料序号 (留空返回): ").strip()
             if not replace_choice_str:
                 return
-            replace_choice = int(replace_choice_str) - 1
-            if replace_choice < 0 or replace_choice >= len(available):
-                raise ValueError
-        except ValueError:
-            print("无效的选择")
+            replace_idx = int(replace_choice_str)
+            if replace_idx < 1 or replace_idx > len(available_list):
+                raise ValueError(f"序号需在 1~{len(available_list)} 之间")
+            replace_pos = replace_idx - 1
+        except ValueError as e:
+            print(f"无效的选择: {e}")
             input("按回车继续...")
             return
 
-        replace_ingredient = available[replace_choice]
+        replace_ingredient = available_list[replace_pos]
+        print(f"▶ 已选择替换为 #{replace_idx}: {replace_ingredient.name} ({replace_ingredient.current_price:.2f}元/{replace_ingredient.unit})")
 
         try:
-            amount_str = input(f"请输入替换用量 ({replace_ingredient.name}): ").strip()
+            default_amount = original_item.amount
+            amount_str = input(f"请输入替换用量 [{default_amount}{original_item.unit}]: ").strip()
             if not amount_str:
-                return
-            replace_amount = float(amount_str)
-            if replace_amount <= 0:
-                raise ValueError
+                replace_amount = default_amount
+            else:
+                replace_amount = float(amount_str)
+                if replace_amount <= 0:
+                    raise ValueError
         except ValueError:
             print("无效的用量")
             input("按回车继续...")
             return
 
-        print(f"可用单位: g, ml, kg, L, 个, 把, 片")
-        replace_unit = input(f"请输入替换单位: ").strip()
-        if not replace_unit:
-            return
+        default_unit = original_item.unit
+        unit_input = input(f"请输入替换单位 [{default_unit}]: ").strip()
+        replace_unit = unit_input if unit_input else default_unit
 
         try:
             result = CostCalculator.simulate_ingredient_replace(
@@ -856,39 +913,56 @@ class RestaurantCostAnalyzer:
             input("按回车继续...")
             return
 
-        print()
-        print("=" * 70)
-        print("替换模拟结果对比")
-        print("=" * 70)
-        print()
-        print(f"{'项目':<20} {'替换前':<20} {'替换后':<20} {'变化':<15}")
-        print("-" * 70)
-
+        ori_analysis = result['original']
+        new_analysis = result['new']
         cost_change = result['cost_diff']
         cost_sign = "+" if cost_change > 0 else ""
         price_change = result['price_diff']
         price_sign = "+" if price_change > 0 else ""
 
-        print(f"{'原材料':<20} {original_item.ingredient_name:<20} {replace_ingredient.name:<20} {'':<15}")
-        print(f"{'用量':<20} {f'{original_item.amount}{original_item.unit}':<20} {f'{replace_amount}{replace_unit}':<20} {'':<15}")
-        print(f"{'物料成本(元)':<20} {result['original'].material_cost:<20.2f} {result['new'].material_cost:<20.2f} {f'{cost_sign}{cost_change:.2f}':<15}")
-        print(f"{'建议售价(元)':<20} {result['original'].suggested_price:<20.2f} {result['new'].suggested_price:<20.2f} {f'{price_sign}{price_change:.2f}':<15}")
-        print(f"{'毛利率':<20} {f'{result[\"original\"].gross_margin*100:.1f}%':<20} {f'{result[\"new\"].gross_margin*100:.1f}%':<20} {f'{(result[\"new\"].gross_margin-result[\"original\"].gross_margin)*100:+.1f}%':<15}")
+        self.print_header("替换模拟结果对比")
+        print(f"菜品: {dish.name}")
+        print(f"替换: {original_item.ingredient_name} → {replace_ingredient.name}")
+        print()
+        print("=" * 70)
+        print(f"{'项目':<16} {'替换前':<18} {'替换后':<18} {'变化':<16}")
+        print("-" * 70)
+
+        print(f"{'原材料':<16} {original_item.ingredient_name:<18} {replace_ingredient.name:<18} {'':<16}")
+        print(f"{'用量':<16} {f'{original_item.amount}{original_item.unit}':<18} {f'{replace_amount}{replace_unit}':<18} {'':<16}")
+        profit_change = new_analysis.gross_profit - ori_analysis.gross_profit
+        profit_sign = "+" if profit_change > 0 else ""
+        print(f"{'物料成本(元)':<16} {ori_analysis.material_cost:<18.2f} {new_analysis.material_cost:<18.2f} {f'{cost_sign}{cost_change:.2f}':<16}")
+        print(f"{'建议售价(元)':<16} {ori_analysis.suggested_price:<18.2f} {new_analysis.suggested_price:<18.2f} {f'{price_sign}{price_change:.2f}':<16}")
+        print(f"{'毛利额(元)':<16} {ori_analysis.gross_profit:<18.2f} {new_analysis.gross_profit:<18.2f} {f'{profit_sign}{profit_change:.2f}':<16}")
+        print(f"{'毛利率':<16} {f'{ori_analysis.gross_margin*100:.1f}%':<18} {f'{new_analysis.gross_margin*100:.1f}%':<18} {f'{(new_analysis.gross_margin-ori_analysis.gross_margin)*100:+.1f}%':<16}")
 
         if result['calorie_diff'] is not None:
             calorie_change = result['calorie_diff']
             calorie_sign = "+" if calorie_change > 0 else ""
-            print(f"{'总热量(kcal)':<20} {f'{result[\"original\"].total_calorie:.0f}':<20} {f'{result[\"new\"].total_calorie:.0f}':<20} {f'{calorie_sign}{calorie_change:.0f}':<15}")
+            print(f"{'总热量(kcal)':<16} {f'{ori_analysis.total_calorie:.0f}':<18} {f'{new_analysis.total_calorie:.0f}':<18} {f'{calorie_sign}{calorie_change:.0f}':<16}")
 
+        print("=" * 70)
         print()
         if cost_change < 0:
-            print(f"✓ 成本降低: {-cost_change:.2f} 元 ({-cost_change/result['original'].material_cost*100:.1f}%)")
+            print(f"✅ 成本降低: {-cost_change:.2f} 元 (降幅 {-cost_change/ori_analysis.material_cost*100:.1f}%)")
         elif cost_change > 0:
-            print(f"⚠ 成本增加: {cost_change:.2f} 元 ({cost_change/result['original'].material_cost*100:.1f}%)")
+            print(f"⚠️  成本增加: {cost_change:.2f} 元 (增幅 {cost_change/ori_analysis.material_cost*100:.1f}%)")
         else:
-            print("= 成本无变化")
+            print("➖ 成本无变化")
 
         print()
+        print("--- 替换后配方明细 ---")
+        new_ingredient_costs_map = {name: cost for name, cost in new_analysis.ingredient_costs}
+        print(f"{'原材料':<15} {'用量':<10} {'成本(元)':<12} {'占比':<10}")
+        print("-" * 50)
+        for item in new_analysis.dish.recipe:
+            cost = new_ingredient_costs_map.get(item.ingredient_name, 0.0)
+            percentage = (cost / new_analysis.material_cost * 100) if new_analysis.material_cost > 0 else 0
+            marker = " ← 替换项" if item.ingredient_id == replace_ingredient.id else ""
+            print(f"{item.ingredient_name:<15} {item.amount:.0f}{item.unit:<7} {cost:<12.2f} {percentage:<10.1f}%{marker}")
+        print()
+
         apply = input("是否应用此替换到菜品配方? (y/N): ").strip().lower()
         if apply == 'y':
             for item in dish.recipe:
@@ -904,7 +978,19 @@ class RestaurantCostAnalyzer:
 
             self._recalculate_all()
             self._save_data()
-            print("✓ 已应用替换")
+            print()
+            print("✅ 已应用替换！以下是该菜品最新成本明细：")
+            print()
+            updated_analysis = None
+            for a in self.analyses:
+                if a.dish.id == dish.id:
+                    updated_analysis = a
+                    break
+            if updated_analysis:
+                _display_dish_analysis_detail(updated_analysis)
+        else:
+            print()
+            print("未应用替换。")
 
         print()
         input("按回车继续...")
@@ -1027,15 +1113,15 @@ class RestaurantCostAnalyzer:
             input("按回车继续...")
             return
 
-        default_path = f"exports/成本卡_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        output_path = input(f"请输入输出路径 (默认: {default_path}): ").strip()
-        if not output_path:
-            output_path = default_path
+        default_filename = f"成本卡_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        output_input = input(f"请输入输出文件名或路径 (默认: {default_filename}): ").strip()
+        output_path = resolve_path(output_input, default_filename)
 
         title = input("请输入报告标题 (默认: 餐饮连锁店菜品成本卡): ").strip()
         if not title:
             title = "餐饮连锁店菜品成本卡"
 
+        print(f"正在导出到: {output_path} ...")
         success = PDFExporter.export_cost_cards(analyses_to_export, output_path, title)
 
         if success:
